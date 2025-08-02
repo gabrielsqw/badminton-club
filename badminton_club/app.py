@@ -144,7 +144,10 @@ def display_page(pathname):
     [Output("url", "pathname", allow_duplicate=True),
      Output("login-alert", "children", allow_duplicate=True),
      Output("login-alert", "color", allow_duplicate=True),
-     Output("login-alert", "is_open", allow_duplicate=True)],
+     Output("login-alert", "is_open", allow_duplicate=True),
+     Output("alert-message", "children", allow_duplicate=True),
+     Output("alert-message", "color", allow_duplicate=True),
+     Output("alert-message", "is_open", allow_duplicate=True)],
     [Input("login-btn", "n_clicks")],
     [State("username", "value"),
      State("password", "value")],
@@ -154,24 +157,27 @@ def handle_login(n_clicks, username, password):
     if n_clicks and username and password:
         if auth_manager.verify_credentials(username, password):
             auth_manager.login_user(username)
-            return "/", "Login successful!", "success", True
+            return "/", "", "info", False, "Login successful!", "success", True
         else:
-            return "/", "Invalid username or password", "danger", True
-    return "/", "", "info", False
+            return "/", "Invalid username or password", "danger", True, "", "info", False
+    return "/", "", "info", False, "", "info", False
 
 @callback(
     [Output("url", "pathname", allow_duplicate=True),
      Output("alert-message", "children", allow_duplicate=True),
      Output("alert-message", "color", allow_duplicate=True),
-     Output("alert-message", "is_open", allow_duplicate=True)],
+     Output("alert-message", "is_open", allow_duplicate=True),
+     Output("login-alert", "children", allow_duplicate=True),
+     Output("login-alert", "color", allow_duplicate=True),
+     Output("login-alert", "is_open", allow_duplicate=True)],
     [Input("logout-btn", "n_clicks")],
     prevent_initial_call=True
 )
 def handle_logout(n_clicks):
     if n_clicks:
         auth_manager.logout_user()
-        return "/", "Logged out successfully", "info", True
-    return "/", "", "info", False
+        return "/", "", "info", False, "Logged out successfully", "info", True
+    return "/", "", "info", False, "", "info", False
 
 # Run the app
 if __name__ == "__main__":
