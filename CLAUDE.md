@@ -24,7 +24,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 This is a Dash-based web application for a badminton club with secure authentication:
 
 ### Application Structure
-- **app.py**: Main application with integrated authentication system
+- **app.py**: Main application entry point with UI components and routing
+- **auth.py**: Authentication module handling credentials, session management, and security
 - **pages/**: Directory containing individual page modules that auto-register with Dash
   - `home.py`: Landing page (path: "/")
   - `faq.py`: FAQ page (path: "/faq")
@@ -33,13 +34,16 @@ This is a Dash-based web application for a badminton club with secure authentica
 - **Multi-page architecture**: Uses Dash's `page_registry` and `page_container` for automatic page discovery
 - **Bootstrap styling**: Uses `dash-bootstrap-components` with DARKLY theme
 - **Page registration**: Pages automatically register themselves using `register_page(__name__, path='...')`
+- **Separation of concerns**: Authentication logic separated into dedicated `auth.py` module
 - **Session management**: Flask sessions for authentication state with secure secret key
 - **Containerization**: Docker setup using Python 3.12-slim with gunicorn for production
 
 ### Authentication System
-- **Secure password hashing**: Uses SHA256 for password verification
+- **Modular design**: Dedicated `AuthManager` class in `auth.py` handling all authentication logic
+- **Secure password hashing**: Uses SHA256 for password verification with `hash_password()` utility
 - **Environment-based configuration**: Credentials and secrets configurable via environment variables
 - **Session-based authentication**: Flask sessions with auto-generated secret keys
+- **Clean API**: Methods like `verify_credentials()`, `login_user()`, `logout_user()`, `is_authenticated()`
 - **Conditional layout rendering**: Login screen vs main application based on authentication state
 - **Responsive UI**: Bootstrap-styled login form with proper validation feedback
 

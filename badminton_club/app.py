@@ -1,9 +1,6 @@
-import os
-import hashlib
-import secrets
 from dash import Dash, dcc, html, page_container, page_registry, Input, Output, State, callback
 import dash_bootstrap_components as dbc
-from flask import session
+from badminton_club.auth import auth_manager
 
 # Initialize the Dash app with a Bootstrap theme
 app = Dash(
@@ -17,22 +14,12 @@ app.title = "Gab's badminton group"  # Set browser title
 
 # Flask server configuration
 server = app.server
-server.secret_key = os.environ.get('SECRET_KEY', secrets.token_hex(32))
-
-# Authentication configuration
-VALID_USERNAME = os.environ.get('ADMIN_USERNAME', 'admin')
-VALID_PASSWORD_HASH = os.environ.get('ADMIN_PASSWORD_HASH') or hashlib.sha256('password123'.encode()).hexdigest()
-
-def verify_password(username, password):
-    if username != VALID_USERNAME:
-        return False
-    password_hash = hashlib.sha256(password.encode()).hexdigest()
-    return password_hash == VALID_PASSWORD_HASH
+server.secret_key = auth_manager.get_secret_key()
 
 # Define the main layout with all components present
 app.layout = html.Div([
     dcc.Location(id="url", refresh=False),
-    
+
     # Login container
     dbc.Container([
         dbc.Row([
@@ -79,19 +66,19 @@ app.layout = html.Div([
                 ], className="shadow")
             ], width={"size": 6, "offset": 3})
         ], className="min-vh-100 d-flex align-items-center"),
-        
-        # Alert for login messages
+
+        # Alert for login messages (positioned at top)
         dbc.Alert(
             id="login-alert",
             is_open=False,
             dismissable=True,
-            className="mt-3"
+            style={"position": "fixed", "top": "20px", "left": "50%", "transform": "translateX(-50%)", "z-index": "9999", "width": "400px"}
         )
     ], fluid=True, id="login-container"),
-    
+
     # Main app container
     dbc.Container([
-        # Navigation with logout button
+        # Navigation with user info and logout button
         dbc.Navbar([
             dbc.Nav([
                 dbc.NavItem(
@@ -100,6 +87,13 @@ app.layout = html.Div([
                 for page in page_registry.values()
             ], pills=True, className="me-auto"),
             dbc.Nav([
+                dbc.NavItem([
+                    html.Span(
+                        id="username-display",
+                        className="navbar-text me-3",
+                        style={"color": "white"}
+                    )
+                ]),
                 dbc.NavItem(
                     dbc.Button(
                         "Logout",
@@ -110,7 +104,7 @@ app.layout = html.Div([
                 )
             ])
         ], color="dark", dark=True, className="mb-4"),
-        
+
         # Page content
         dbc.Card(
             dbc.CardBody(
@@ -119,29 +113,32 @@ app.layout = html.Div([
             ),
             className="shadow-sm",
         ),
-        
-        # Alert for messages
+
+        # Alert for messages (positioned at top)
         dbc.Alert(
             id="alert-message",
             is_open=False,
             dismissable=True,
-            className="mt-3"
+            style={"position": "fixed", "top": "20px", "left": "50%", "transform": "translateX(-50%)", "z-index": "9999", "width": "400px"}
         )
     ], fluid=True, style={"padding": "20px"}, id="main-container")
 ])
 
 @callback(
     [Output("login-container", "style"),
-     Output("main-container", "style")],
+     Output("main-container", "style"),
+     Output("username-display", "children")],
     [Input("url", "pathname")]
 )
 def display_page(pathname):
-    if session.get("authenticated"):
+    if auth_manager.is_authenticated():
         # Show main app, hide login
-        return {"display": "none"}, {"padding": "20px"}
+        username = auth_manager.get_current_username()
+        username_text = f"Welcome, {username}" if username else "Welcome"
+        return {"display": "none"}, {"padding": "20px"}, username_text
     else:
         # Show login, hide main app
-        return {}, {"display": "none"}
+        return {}, {"display": "none"}, ""
 
 @callback(
     [Output("url", "pathname", allow_duplicate=True),
@@ -155,8 +152,8 @@ def display_page(pathname):
 )
 def handle_login(n_clicks, username, password):
     if n_clicks and username and password:
-        if verify_password(username, password):
-            session["authenticated"] = True
+        if auth_manager.verify_credentials(username, password):
+            auth_manager.login_user(username)
             return "/", "Login successful!", "success", True
         else:
             return "/", "Invalid username or password", "danger", True
@@ -172,7 +169,7 @@ def handle_login(n_clicks, username, password):
 )
 def handle_logout(n_clicks):
     if n_clicks:
-        session.clear()
+        auth_manager.logout_user()
         return "/", "Logged out successfully", "info", True
     return "/", "", "info", False
 
