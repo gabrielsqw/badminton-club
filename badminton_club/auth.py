@@ -5,14 +5,18 @@ This module handles user authentication, password verification, and session mana
 using a PostgreSQL database backend with SQLAlchemy.
 """
 
+import logging
 import os
 import hashlib
 import secrets
 from typing import Optional
 from flask import session
+from sqlalchemy.exc import SQLAlchemyError, OperationalError
 
 from badminton_club.database import db_session
 from badminton_club.database.models import User
+
+logger = logging.getLogger(__name__)
 
 
 class AuthManager:
@@ -29,8 +33,13 @@ class AuthManager:
                 User.username == username,
                 User.is_active == True  # noqa: E712
             ).first()
-        except Exception:
-            # Database might not be initialized yet
+        except OperationalError as e:
+            # Database connection issues (not initialized, unavailable)
+            logger.debug("Database unavailable: %s", e)
+            return None
+        except SQLAlchemyError as e:
+            # Other database errors
+            logger.error("Database error while fetching user: %s", e)
             return None
 
     def verify_credentials(self, username: str, password: str) -> bool:
@@ -63,11 +72,12 @@ class AuthManager:
             # Default password: 'password123'
             env_hash = hashlib.sha256('password123'.encode()).hexdigest()
 
-        if username != env_username:
-            return False
-
+        # Use constant-time comparison for username too
+        username_match = secrets.compare_digest(username, env_username)
         password_hash = hashlib.sha256(password.encode()).hexdigest()
-        return password_hash == env_hash
+        password_match = secrets.compare_digest(password_hash, env_hash)
+
+        return username_match and password_match
 
     def login_user(self, username: str) -> None:
         """Mark the user as authenticated in the session."""
@@ -122,7 +132,8 @@ class AuthManager:
             db_session.add(user)
             db_session.commit()
             return user
-        except Exception:
+        except SQLAlchemyError as e:
+            logger.error("Failed to create user '%s': %s", username, e)
             db_session.rollback()
             return None
 

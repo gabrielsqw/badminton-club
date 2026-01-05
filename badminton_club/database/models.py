@@ -3,6 +3,7 @@ Database models for the badminton club application.
 """
 
 import hashlib
+import secrets
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, DateTime, Boolean
 from badminton_club.database import Base
@@ -29,8 +30,9 @@ class User(Base):
         self.password_hash = hashlib.sha256(password.encode()).hexdigest()
 
     def check_password(self, password: str) -> bool:
-        """Verify a password against the stored hash."""
-        return self.password_hash == hashlib.sha256(password.encode()).hexdigest()
+        """Verify a password against the stored hash using constant-time comparison."""
+        password_hash = hashlib.sha256(password.encode()).hexdigest()
+        return secrets.compare_digest(self.password_hash, password_hash)
 
     @classmethod
     def create_user(cls, username: str, password: str, email: str = None) -> 'User':

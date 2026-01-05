@@ -9,6 +9,7 @@ from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 import hashlib
 
 # revision identifiers, used by Alembic.
@@ -38,8 +39,14 @@ def upgrade() -> None:
     # Insert default admin user (password: password123)
     default_password_hash = hashlib.sha256('password123'.encode()).hexdigest()
     op.execute(
-        f"INSERT INTO users (username, password_hash, email, is_active, created_at, updated_at) "
-        f"VALUES ('admin', '{default_password_hash}', 'admin@example.com', true, NOW(), NOW())"
+        text(
+            "INSERT INTO users (username, password_hash, email, is_active, created_at, updated_at) "
+            "VALUES (:username, :password_hash, :email, true, NOW(), NOW())"
+        ).bindparams(
+            username='admin',
+            password_hash=default_password_hash,
+            email='admin@example.com'
+        )
     )
 
 
