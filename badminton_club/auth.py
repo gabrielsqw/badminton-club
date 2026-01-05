@@ -2,7 +2,7 @@
 Authentication module for the badminton club application.
 
 This module handles user authentication, password verification, and session management
-with secure practices including password hashing and environment-based configuration.
+using a PostgreSQL database backend with SQLAlchemy.
 """
 
 import os
@@ -11,81 +11,120 @@ import secrets
 from typing import Optional
 from flask import session
 
+from badminton_club.database import db_session
+from badminton_club.database.models import User
+
 
 class AuthManager:
     """Handles authentication logic for the application."""
-    
+
     def __init__(self):
-        """Initialize the authentication manager with environment-based config."""
-        self.username = os.environ.get('ADMIN_USERNAME', 'admin')
-        self.password_hash = self._get_password_hash()
+        """Initialize the authentication manager."""
         self.secret_key = os.environ.get('SECRET_KEY', secrets.token_hex(32))
-    
-    def _get_password_hash(self) -> str:
-        """Get the password hash from environment or use default."""
-        env_hash = os.environ.get('ADMIN_PASSWORD_HASH')
-        if env_hash:
-            return env_hash
-        
-        # Default password: 'password123'
-        default_password = 'password123'
-        return hashlib.sha256(default_password.encode()).hexdigest()
-    
+
+    def get_user_by_username(self, username: str) -> Optional[User]:
+        """Get a user by username from the database."""
+        try:
+            return db_session.query(User).filter(
+                User.username == username,
+                User.is_active == True  # noqa: E712
+            ).first()
+        except Exception:
+            # Database might not be initialized yet
+            return None
+
     def verify_credentials(self, username: str, password: str) -> bool:
         """
-        Verify username and password against stored credentials.
-        
+        Verify username and password against database.
+
         Args:
             username: The username to verify
             password: The password to verify (plaintext)
-            
+
         Returns:
             True if credentials are valid, False otherwise
         """
         if not username or not password:
             return False
-            
-        if username != self.username:
+
+        user = self.get_user_by_username(username)
+        if user is None:
+            # Fall back to environment-based auth if DB not available
+            return self._verify_fallback_credentials(username, password)
+
+        return user.check_password(password)
+
+    def _verify_fallback_credentials(self, username: str, password: str) -> bool:
+        """Fallback authentication using environment variables."""
+        env_username = os.environ.get('ADMIN_USERNAME', 'admin')
+        env_hash = os.environ.get('ADMIN_PASSWORD_HASH')
+
+        if not env_hash:
+            # Default password: 'password123'
+            env_hash = hashlib.sha256('password123'.encode()).hexdigest()
+
+        if username != env_username:
             return False
-        
+
         password_hash = hashlib.sha256(password.encode()).hexdigest()
-        return password_hash == self.password_hash
-    
+        return password_hash == env_hash
+
     def login_user(self, username: str) -> None:
         """Mark the user as authenticated in the session."""
         session['authenticated'] = True
         session['username'] = username
-    
+
     def logout_user(self) -> None:
         """Clear the user's session."""
         session.clear()
-    
+
     def is_authenticated(self) -> bool:
         """Check if the current user is authenticated."""
         return session.get('authenticated', False)
-    
+
     def get_current_username(self) -> Optional[str]:
         """Get the current authenticated username."""
         if self.is_authenticated():
             return session.get('username')
         return None
-    
+
     def get_secret_key(self) -> str:
         """Get the Flask secret key for session management."""
         return self.secret_key
-    
+
     @staticmethod
     def hash_password(password: str) -> str:
         """
         Hash a password for storage.
-        
+
         Args:
             password: The plaintext password to hash
-            
+
         Returns:
             The SHA256 hash of the password
         """
         return hashlib.sha256(password.encode()).hexdigest()
+
+    def create_user(self, username: str, password: str, email: str = None) -> Optional[User]:
+        """
+        Create a new user in the database.
+
+        Args:
+            username: The username for the new user
+            password: The password for the new user (plaintext)
+            email: Optional email address
+
+        Returns:
+            The created User object, or None if creation failed
+        """
+        try:
+            user = User.create_user(username=username, password=password, email=email)
+            db_session.add(user)
+            db_session.commit()
+            return user
+        except Exception:
+            db_session.rollback()
+            return None
 
 
 # Global auth manager instance

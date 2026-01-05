@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: badminton-db
+    environment:
+      POSTGRES_USER: badminton
+      POSTGRES_PASSWORD: badminton_secret
+      POSTGRES_DB: badminton_club
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U badminton -d badminton_club"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: badminton-app
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://badminton:badminton_secret@db:5432/badminton_club
+      SECRET_KEY: change-me-in-production
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./badminton_club:/app/badminton_club:ro
+
+volumes:
+  postgres_data:
