@@ -1,6 +1,7 @@
 from dash import Dash, dcc, html, page_container, page_registry, Input, Output, State, callback
 import dash_bootstrap_components as dbc
 from badminton_club.auth import auth_manager
+from badminton_club.database import db_session
 
 # Initialize the Dash app with a Bootstrap theme
 app = Dash(
@@ -15,6 +16,12 @@ app.title = "Gab's badminton group"  # Set browser title
 # Flask server configuration
 server = app.server
 server.secret_key = auth_manager.get_secret_key()
+
+
+@server.teardown_appcontext
+def shutdown_session(exception=None):
+    """Clean up database session after each request."""
+    db_session.remove()
 
 # Define the main layout with all components present
 app.layout = html.Div([
