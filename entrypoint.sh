@@ -1,11 +1,19 @@
 #!/bin/bash
 set -e
 
-# Wait for the database to be ready
+# Ensure DATABASE_URL is set
+if [ -z "$DATABASE_URL" ]; then
+    echo "Error: DATABASE_URL environment variable is not set"
+    exit 1
+fi
+
+# Wait for the database to be ready using DATABASE_URL from environment
 echo "Waiting for database..."
 while ! python -c "
-from badminton_club.database import engine
-from sqlalchemy import text
+import os
+from sqlalchemy import create_engine, text
+db_url = os.environ['DATABASE_URL']
+engine = create_engine(db_url)
 try:
     with engine.connect() as conn:
         conn.execute(text('SELECT 1'))

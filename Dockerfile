@@ -30,9 +30,9 @@ COPY alembic/ /app/alembic/
 # Copy application code
 COPY badminton_club/ /app/badminton_club/
 
-# Copy and set up entrypoint
+# Copy and set up entrypoint (convert Windows line endings to Unix)
 COPY entrypoint.sh .
-RUN chmod +x entrypoint.sh
+RUN sed -i 's/\r$//' entrypoint.sh && chmod +x entrypoint.sh
 
 # Use entrypoint to run migrations before starting
 ENTRYPOINT ["/app/entrypoint.sh"]
