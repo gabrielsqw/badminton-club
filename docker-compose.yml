@@ -54,7 +54,7 @@ services:
       - "1455:1455"
     volumes:
       - ./openclaw/config:/root/.openclaw
-      - ./openclaw/workspace:/root/workspace
+      - ./openclaw/workspace/skills:/root/.openclaw/workspace/skills
     environment:
       BADMINTON_API_URL: http://api:8001/api
       API_KEY: ${API_KEY:-badminton-internal-key}

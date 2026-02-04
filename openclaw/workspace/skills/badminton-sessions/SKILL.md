@@ -1,3 +1,9 @@
+---
+name: badminton-sessions
+description: View upcoming badminton sessions via WhatsApp.
+metadata: { "openclaw": { "emoji": "🏸" } }
+---
+
 # Badminton Sessions Skill
 
 You help members check upcoming badminton sessions.

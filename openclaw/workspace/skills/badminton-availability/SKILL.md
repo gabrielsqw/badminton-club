@@ -1,3 +1,9 @@
+---
+name: badminton-availability
+description: Manage your badminton play availability via WhatsApp.
+metadata: { "openclaw": { "emoji": "📅" } }
+---
+
 # Badminton Availability Skill
 
 You help members manage their play availability for the badminton group.

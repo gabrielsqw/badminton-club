@@ -1,3 +1,9 @@
+---
+name: badminton-link
+description: Link your WhatsApp number to your badminton club account.
+metadata: { "openclaw": { "emoji": "🔗" } }
+---
+
 # Badminton Account Linking Skill
 
 You help new WhatsApp users link their phone number to their badminton club account.
