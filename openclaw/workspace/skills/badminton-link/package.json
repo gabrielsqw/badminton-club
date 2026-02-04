@@ -1,0 +1,13 @@
+{
+  "name": "badminton-link",
+  "version": "1.0.0",
+  "description": "Link WhatsApp phone number to badminton club account",
+  "openclaw": {
+    "skills": {
+      "dependencies": {
+        "tools": ["web_fetch"],
+        "envVars": ["BADMINTON_API_URL", "API_KEY"]
+      }
+    }
+  }
+}

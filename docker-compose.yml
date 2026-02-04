@@ -32,5 +32,36 @@ services:
     volumes:
       - ./badminton_club:/app/badminton_club:ro
 
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: badminton-api
+    environment:
+      DATABASE_URL: postgresql://badminton:badminton_secret@db:5432/badminton_club
+      API_KEY: ${API_KEY:-badminton-internal-key}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  openclaw:
+    build:
+      context: .
+      dockerfile: Dockerfile.openclaw
+    container_name: badminton-openclaw
+    ports:
+      - "18789:18789"
+      - "1455:1455"
+    volumes:
+      - ./openclaw/config:/root/.openclaw
+      - ./openclaw/workspace:/root/workspace
+    environment:
+      BADMINTON_API_URL: http://api:8001/api
+      API_KEY: ${API_KEY:-badminton-internal-key}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+    depends_on:
+      - api
+    restart: unless-stopped
+
 volumes:
   postgres_data:

@@ -1,0 +1,23 @@
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip install uv
+
+COPY requirements-api.txt .
+RUN uv pip install --system -r requirements-api.txt
+
+COPY badminton_club/__init__.py /app/badminton_club/__init__.py
+COPY badminton_club/database/ /app/badminton_club/database/
+COPY badminton_club/api/ /app/badminton_club/api/
+
+EXPOSE 8001
+
+CMD ["uvicorn", "badminton_club.api.main:app", "--host", "0.0.0.0", "--port", "8001"]

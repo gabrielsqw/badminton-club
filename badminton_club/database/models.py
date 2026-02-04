@@ -48,6 +48,7 @@ class User(Base):
     username = Column(String(80), unique=True, nullable=False, index=True)
     password_hash = Column(String(64), nullable=False)  # SHA256 hex digest is 64 chars
     email = Column(String(120), unique=True, nullable=True)
+    phone_number = Column(String(20), unique=True, nullable=True, index=True)
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(
@@ -72,9 +73,11 @@ class User(Base):
         return secrets.compare_digest(self.password_hash, password_hash)
 
     @classmethod
-    def create_user(cls, username: str, password: str, email: str = None) -> "User":
+    def create_user(
+        cls, username: str, password: str, email: str = None, phone_number: str = None
+    ) -> "User":
         """Factory method to create a new user with hashed password."""
-        user = cls(username=username, email=email)
+        user = cls(username=username, email=email, phone_number=phone_number)
         user.set_password(password)
         return user
 

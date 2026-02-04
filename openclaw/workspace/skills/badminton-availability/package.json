@@ -1,0 +1,13 @@
+{
+  "name": "badminton-availability",
+  "version": "1.0.0",
+  "description": "Manage badminton play availability via WhatsApp",
+  "openclaw": {
+    "skills": {
+      "dependencies": {
+        "tools": ["web_fetch"],
+        "envVars": ["BADMINTON_API_URL", "API_KEY"]
+      }
+    }
+  }
+}

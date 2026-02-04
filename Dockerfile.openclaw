@@ -1,0 +1,15 @@
+FROM node:22-bookworm
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN rm -f /dev/tty \
+    && curl -fsSL https://openclaw.ai/install.sh | bash
+
+COPY entrypoint-openclaw.sh /entrypoint-openclaw.sh
+RUN sed -i 's/\r$//' /entrypoint-openclaw.sh && chmod +x /entrypoint-openclaw.sh
+
+EXPOSE 18789
+
+ENTRYPOINT ["/entrypoint-openclaw.sh"]
