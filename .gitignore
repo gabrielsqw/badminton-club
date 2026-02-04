@@ -163,3 +163,4 @@ cython_debug/
 # OpenClaw credentials (WhatsApp session tokens)
 openclaw/config/credentials/
 openclaw/config/auth/
+openclaw/config/
