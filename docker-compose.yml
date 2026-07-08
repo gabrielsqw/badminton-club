@@ -4,14 +4,15 @@ services:
   db:
     image: postgres:16-alpine
     container_name: badminton-db
+    restart: unless-stopped
     environment:
       POSTGRES_USER: badminton
       POSTGRES_PASSWORD: badminton_secret
       POSTGRES_DB: badminton_club
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+     - "5433:5432"
+    volumes:
+     - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U badminton -d badminton_club"]
       interval: 5s
@@ -25,12 +26,13 @@ services:
       - "8000:8000"
     environment:
       DATABASE_URL: postgresql://badminton:badminton_secret@db:5432/badminton_club
-      SECRET_KEY: change-me-in-production
+      SECRET_KEY: cinquante-dix-coq
     depends_on:
       db:
         condition: service_healthy
     volumes:
       - ./badminton_club:/app/badminton_club:ro
+    restart: unless-stopped
 
   api:
     build:
@@ -43,6 +45,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    restart: unless-stopped
 
   openclaw:
     build:
@@ -50,7 +53,7 @@ services:
       dockerfile: Dockerfile.openclaw
     container_name: badminton-openclaw
     ports:
-      - "18789:18789"
+      - "18790:18789"
       - "1455:1455"
     volumes:
       - ./openclaw/config:/root/.openclaw
